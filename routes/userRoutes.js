@@ -9,8 +9,21 @@ const upload = require("../middlewares/multer");
 
 router.post(
   '/register',
-  upload.single("file"), 
+  upload.fields([
+    { name: "profilePhoto", maxCount: 1 },
+    { name: "resume", maxCount: 1 }
+  ]),
   userController.register
+);
+
+router.put(
+  '/update',
+  upload.fields([
+    { name: "profilePhoto", maxCount: 1 },
+    { name: "resume", maxCount: 1 }
+  ]),
+  isAuthenticated,
+  userController.updateProfile
 );
 
 
@@ -21,14 +34,6 @@ router.post(
   '/logout',
   isAuthenticated,
   userController.logout
-);
-
-
-router.put(
-  '/update',
-  upload.single("file"),   
-  isAuthenticated,
-  userController.updateProfile
 );
 
 

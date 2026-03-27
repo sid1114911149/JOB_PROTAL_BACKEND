@@ -1,6 +1,7 @@
 const express = require('express');
 const Application = require('../models/Application');
 const Job = require('../models/Job');
+const User = require('../models/User');
 const applyJob = async (req, res) => {
     try {
         const userId = req.userId;
@@ -32,7 +33,13 @@ const applyJob = async (req, res) => {
                 success: false
             });
         }
-
+        const user = await User.findById(userId);
+        if (!user.resume) {
+            return res.status(404).json({
+                message: "Resume not found",
+                success: false
+            });
+        }
         const newApplication = await Application.create({
             applicant: userId,
             job: jobId
@@ -63,7 +70,7 @@ const getAppliedJobs = async (req, res) => {
             .sort({ createdAt: -1 })
             .populate({
                 path: 'job',
-                model: 'Job',  
+                model: 'Job',
                 populate: {
                     path: 'company',
                     model: 'Company'
@@ -127,13 +134,21 @@ const getApplicants = async (req, res) => {
 const updateStatus = async (req, res) => {
     try {
         const { status } = req.body;
-        const applicationId = req.params.id;
         if (!status) {
             return res.status(400).json({
                 message: "Status is required",
                 success: false
             });
         }
+        const validStatuses = ["pending", "accepted", "rejected"];
+
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({
+                message: "Invalid status value",
+                success: false
+            });
+        }
+        const applicationId = req.params.id;
 
         const updatedStatus = status.toLowerCase();
 

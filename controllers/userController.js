@@ -26,8 +26,15 @@ const register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 12);
 
         let profilePhoto = "";
-        if (req.file) {
-            profilePhoto = `/uploads/${req.file.filename}`;
+        let resume = "";
+
+        // ✅ handle multiple files
+        if (req.files?.profilePhoto) {
+            profilePhoto = `/uploads/${req.files.profilePhoto[0].filename}`;
+        }
+
+        if (req.files?.resume) {
+            resume = `/uploads/${req.files.resume[0].filename}`;
         }
 
         const user = await User.create({
@@ -37,7 +44,8 @@ const register = async (req, res) => {
             password: hashedPassword,
             role,
             profile: {
-                profilePhoto 
+                profilePhoto,
+                resume   // ✅ added
             }
         });
 
@@ -49,8 +57,17 @@ const register = async (req, res) => {
 
     } catch (error) {
         console.log(error);
+
+        // ✅ handle multer errors (file size etc.)
+        if (error.code === "LIMIT_FILE_SIZE") {
+            return res.status(400).json({
+                message: "File size must be less than 500KB",
+                success: false
+            });
+        }
+
         return res.status(500).json({
-            message: "User not created",
+            message: error.message || "User not created",
             success: false
         });
     }
